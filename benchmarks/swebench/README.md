@@ -17,6 +17,14 @@ SWE-Bench is a benchmark for evaluating AI agents on real-world software enginee
 
 ## Usage
 
+### Prerequisites
+
+Local SWE-Bench evaluation uses Docker-based workspaces:
+
+- Ensure Docker is installed and running:
+  - `docker --version`
+  - `docker run --rm hello-world`
+
 ### Docker Workspace (Local Evaluation)
 
 #### Step 1: Build Docker Images
@@ -37,6 +45,17 @@ Run evaluation using the built Docker images:
 
 ```bash
 uv run swebench-infer path/to/llm_config.json \
+    --dataset princeton-nlp/SWE-bench_Verified \
+    --split test \
+    --max-iterations 100 \
+    --workspace docker
+```
+
+**🚨 Cedrus experiments (living in this fork/branch only):**
+
+```bash
+# SWE-Bench inference with cedrus MCP tools enabled (Docker workspace)
+uv run swebench-cedrus-infer .llm_config/custom_devstral.json \
     --dataset princeton-nlp/SWE-bench_Verified \
     --split test \
     --max-iterations 100 \

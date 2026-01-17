@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
+    },
+    "victor-websearch": {
+      "url": "https://victor-websearch.hf.space/gradio_api/mcp/sse"
+    }
+  }
+}

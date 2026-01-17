@@ -1,10 +1,11 @@
+import json
 import os
 import re
 import tempfile
 import time
 import zipfile
 from pathlib import Path
-from typing import List, Sequence, cast
+from typing import Any, Dict, List, Sequence, cast
 
 import huggingface_hub
 import pandas as pd
@@ -300,22 +301,36 @@ class GAIAEvaluation(Evaluation):
 
         # Create agent
         tools = get_default_tools(enable_browser=True)
-        tavily_api_key = os.getenv("TAVILY_API_KEY", "")
-        assert tavily_api_key, "TAVILY_API_KEY environment variable is not set"
+
+        user_mcp_config: Dict[str, Any] | None = None
+        if self.metadata.details is not None:
+            user_mcp_config = cast(
+                Dict[str, Any] | None, self.metadata.details.get("mcp_config")
+            )
+
+        # Load baseline MCP config (fetch + victor-websearch)
+        baseline_mcp_path = Path(__file__).parent / "mcp_config_baseline.json"
+        if not baseline_mcp_path.is_file():
+            raise RuntimeError(f"Baseline MCP config not found at {baseline_mcp_path}")
+        with open(baseline_mcp_path, "r") as f:
+            base_mcp_config = cast(Dict[str, Any], json.load(f))
+
+        if user_mcp_config is not None:
+            base_servers = cast(Dict[str, Any], base_mcp_config.get("mcpServers", {}))
+            user_servers = cast(Dict[str, Any], user_mcp_config.get("mcpServers", {}))
+            merged_servers: Dict[str, Any] = {**base_servers, **user_servers}
+            mcp_config: Dict[str, Any] = {
+                **base_mcp_config,
+                "mcpServers": merged_servers,
+            }
+        else:
+            mcp_config = base_mcp_config
+
         agent = Agent(
             llm=self.metadata.llm,
             tools=tools,
             system_prompt_kwargs={"cli_mode": True},
-            mcp_config={
-                "mcpServers": {
-                    "fetch": {"command": "uvx", "args": ["mcp-server-fetch"]},
-                    "tavily": {
-                        "command": "npx",
-                        "args": ["-y", "tavily-mcp@0.2.1"],
-                        "env": {"TAVILY_API_KEY": tavily_api_key},
-                    },
-                }
-            },
+            mcp_config=mcp_config,
         )
 
         # Create conversation
@@ -546,6 +561,15 @@ def main() -> None:
     """Main entry point for GAIA evaluation."""
     parser = get_parser()
     parser.add_argument(
+        "--mcp-config-path",
+        type=str,
+        default=None,
+        help=(
+            "Optional path to MCP config JSON; "
+            "when set, passed as mcp_config to the Agent"
+        ),
+    )
+    parser.add_argument(
         "--level",
         type=str,
         required=True,
@@ -582,6 +606,15 @@ def main() -> None:
         eval_note=args.note,
     )
 
+    # Load optional MCP config
+    mcp_config: Dict[str, Any] | None = None
+    if args.mcp_config_path:
+        if not os.path.isfile(args.mcp_config_path):
+            raise ValueError(f"MCP config file {args.mcp_config_path} does not exist")
+        with open(args.mcp_config_path, "r") as f:
+            mcp_config = cast(Dict[str, Any], json.load(f))
+        logger.info("Using MCP config: %s", mcp_config)
+
     # Create metadata
     metadata = EvalMetadata(
         llm=llm,
@@ -589,7 +622,7 @@ def main() -> None:
         dataset_split=args.split,
         max_iterations=args.max_iterations,
         eval_output_dir=structured_output_dir,
-        details={"level": args.level},
+        details={"level": args.level, "mcp_config": mcp_config},
         eval_limit=args.n_limit,
         max_attempts=args.max_attempts,
         critic=critic,

@@ -14,14 +14,25 @@ GAIA is a benchmark for evaluating AI assistants on real-world questions that re
 
 ## Usage
 
+### Prerequisites
+
+Local GAIA evaluation uses Docker-based workspaces:
+
+- Ensure Docker is installed and running:
+  - `docker --version`
+  - `docker run --rm hello-world`
+
 ### Step 1: Run Inference
 
-By default, [Tavily MCP server](https://github.com/tavily-ai/tavily-mcp) is configured, which requires an API key set in the environment variable `TAVILY_API_KEY`.
+By default, GAIA uses a baseline MCP configuration that includes:
+- `fetch` via `uvx mcp-server-fetch`
+- `victor-websearch` via the public MCP endpoint at
+  `https://victor-websearch.hf.space/gradio_api/mcp/sse`.
 
 **Basic inference:**
 
 ```bash
-TAVILY_API_KEY=xxx uv run gaia-infer path/to/llm_config.json \
+uv run gaia-infer path/to/llm_config.json \
     --level 2023_level1 \
     --split validation
 ```
@@ -29,13 +40,25 @@ TAVILY_API_KEY=xxx uv run gaia-infer path/to/llm_config.json \
 **Advanced options:**
 
 ```bash
-TAVILY_API_KEY=xxx uv run python -m benchmarks.gaia.run_infer \
+uv run python -m benchmarks.gaia.run_infer \
     path/to/llm_config.json \
     --level 2023_level1 \
     --split validation \
     --max-iterations 100 \
     --critic pass \
     --output-dir outputs/gaia \
+    --num-workers 4
+```
+
+**🚨 Cedrus experiments (living in this fork/branch only):**
+
+```bash
+# GAIA inference with cedrus MCP tools enabled (baseline MCP + cedrus)
+uv run gaia-cedrus-infer .llm_config/custom_devstral.json \
+    --level 2023_level1 \
+    --split validation \
+    --max-iterations 100 \
+    --output-dir outputs/gaia-cedrus \
     --num-workers 4
 ```
 

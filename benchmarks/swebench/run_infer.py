@@ -1,6 +1,7 @@
+import json
 import os
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List, cast
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -222,16 +223,29 @@ class SWEBenchEvaluation(Evaluation):
             # Disable browser tools in CLI mode
             enable_browser=False,
         )
+
+        mcp_config: Dict[str, Any] | None = None
+        if self.metadata.details is not None:
+            mcp_config = cast(
+                Dict[str, Any] | None, self.metadata.details.get("mcp_config")
+            )
+
+        agent_kwargs: Dict[str, Any] = {
+            "llm": self.metadata.llm,
+            "tools": tools,
+            "system_prompt_kwargs": {"cli_mode": True},
+        }
+        if mcp_config is not None:
+            agent_kwargs["mcp_config"] = mcp_config
+
         agent = Agent(
-            llm=self.metadata.llm,
-            tools=tools,
-            system_prompt_kwargs={"cli_mode": True},
             # TODO: we can enable condenser and security analyzer later
             # and have them configurable via EvalMetadata
             # condenser=get_default_condenser(
             #     llm=self.metadata.llm.model_copy(update={"service_id": "condenser"})
             # ),
             # security_analyzer=LLMSecurityAnalyzer(),
+            **agent_kwargs,
         )
 
         assert isinstance(workspace, RemoteWorkspace)
@@ -319,6 +333,15 @@ def main() -> None:
 
     parser = get_parser()
     parser.add_argument(
+        "--mcp-config-path",
+        type=str,
+        default=None,
+        help=(
+            "Optional path to MCP config JSON; "
+            "when set, passed as mcp_config to the Agent"
+        ),
+    )
+    parser.add_argument(
         "--prompt-path",
         type=str,
         default=str(default_prompt_path),
@@ -355,13 +378,21 @@ def main() -> None:
     critic = create_critic(args)
     logger.info(f"Using critic: {type(critic).__name__}")
 
+    mcp_config: Dict[str, Any] | None = None
+    if args.mcp_config_path:
+        if not os.path.isfile(args.mcp_config_path):
+            raise ValueError(f"MCP config file {args.mcp_config_path} does not exist")
+        with open(args.mcp_config_path, "r") as f:
+            mcp_config = cast(Dict[str, Any], json.load(f))
+        logger.info("Using MCP config: %s", mcp_config)
+
     metadata = EvalMetadata(
         llm=llm,
         dataset=args.dataset,
         dataset_split=args.split,
         max_iterations=args.max_iterations,
         eval_output_dir=structured_output_dir,
-        details={},
+        details={"mcp_config": mcp_config},
         prompt_path=args.prompt_path,
         eval_limit=args.n_limit,
         env_setup_commands=["export PIP_CACHE_DIR=~/.cache/pip"],

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "cedrus": {
+      "command": "uvx",
+      "args": [
+        "git+https://github.com/cedrus-mcp/cedrus-mcp"
+      ]
+    }
+  }
+}

@@ -40,17 +40,19 @@ dependencies = [
     "tenacity>=9.1.2",
     "websockets>=12",
     "lmnr>=0.7.24",
-    "multi-swe-bench>=1.1.1",
+    # "multi-swe-bench>=1.1.1",
     "swt-bench @ git+https://github.com/logic-star-ai/swt-bench.git@5fdcd446ff05e248ecfffc19d560a210699f71f8",
 ]
 
 [project.scripts]
 validate-cfg = "benchmarks.scripts.validate_cfg:main"
 swebench-infer = "benchmarks.swebench.run_infer:main"
+swebench-cedrus-infer = "benchmarks.scripts.run_swebench_cedrus:main"
 swtbench-infer = "benchmarks.swtbench.run_infer:main"
 swebench-eval = "benchmarks.swebench.eval_infer:main"
 swtbench-eval = "benchmarks.swtbench.eval_infer:main"
 gaia-infer = "benchmarks.gaia.run_infer:main"
+gaia-cedrus-infer = "benchmarks.scripts.run_gaia_cedrus:main"
 gaia-eval = "benchmarks.gaia.eval_infer:main"
 commit0-infer = "benchmarks.commit0.run_infer:main"
 commit0-eval = "benchmarks.commit0.eval_infer:main"
