@@ -54,7 +54,7 @@ uv run python -m benchmarks.gaia.run_infer \
 
 ```bash
 # GAIA inference with cedrus MCP tools enabled (baseline MCP + cedrus)
-uv run gaia-cedrus-infer .llm_config/custom_devstral.json \
+uv run gaia-cedrus-infer path/to/llm_config.json \
     --level 2023_level1 \
     --split validation \
     --max-iterations 100 \
