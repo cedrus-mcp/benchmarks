@@ -21,6 +21,10 @@ Local GAIA evaluation uses Docker-based workspaces:
 - Ensure Docker is installed and running:
   - `docker --version`
   - `docker run --rm hello-world`
+- On non-linux system:
+  - `docker buildx create --name openhands-builder --driver docker-container --use`
+  - `docker buildx inspect --bootstrap` 
+  - `export DOCKER_DEFAULT_PLATFORM=linux/amd64`
 
 ### Step 1: Run Inference
 
@@ -45,6 +49,7 @@ uv run python -m benchmarks.gaia.run_infer \
     --level 2023_level1 \
     --split validation \
     --max-iterations 100 \
+    --n-limit 50 \
     --critic pass \
     --output-dir outputs/gaia \
     --num-workers 4
