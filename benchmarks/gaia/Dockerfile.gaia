@@ -11,6 +11,9 @@ USER root
 # This caches the mcp-server-fetch package so uvx can start it instantly at runtime
 RUN uvx mcp-server-fetch --version 2>&1 || echo "MCP server cached"
 
+# Pre-install cedrus
+RUN uv pip install "git+https://github.com/cedrus-mcp/cedrus-mcp" 2>&1 || echo "cedrus MCP prefetched (or fetch failed)"
+
 # Switch back to openhands user
 USER openhands
 
