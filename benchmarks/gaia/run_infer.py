@@ -153,6 +153,7 @@ class GAIAEvaluation(Evaluation):
             # Use DockerDevWorkspace with base image (same as main branch)
             workspace = DockerDevWorkspace(
                 base_image="nikolaik/python-nodejs:python3.12-nodejs22",
+                server_image=None,
                 working_dir="/workspace",
                 forward_env=forward_env or [],
             )
